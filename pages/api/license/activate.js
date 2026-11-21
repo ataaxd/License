@@ -1,7 +1,24 @@
 import kv from '../../../lib/kv';
 import { isValidFormat } from '../../../lib/license';
 
+// Endpoint ini dipanggil dari domain lain (halaman lobby/web/app), jadi butuh izin CORS.
+// Ganti '*' dengan domain spesifik (mis. 'https://dungeoncraft.my.id') kalau mau lebih ketat.
+const ALLOWED_ORIGIN = '*';
+
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 export default async function handler(req, res) {
+  setCors(res);
+
+  // Browser mengirim OPTIONS dulu sebagai "izin" sebelum POST sungguhan (preflight).
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ active: false, error: 'method_not_allowed' });
   }
