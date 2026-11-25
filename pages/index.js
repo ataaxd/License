@@ -1,2 +1,22 @@
-import Head from 'next/head';
-export default function Home(){return <><Head><title>License Manager API</title></Head><main style={{fontFamily:'system-ui',maxWidth:720,margin:'12vh auto',padding:24}}><h1>License Manager API</h1><p>Backend lisensi aplikasi.</p><p><a href="/admin">Buka panel administrator</a></p></main></>}
+export default function Home() {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: 8,
+        background: '#101826',
+        color: '#e7edf5',
+        fontFamily: 'system-ui, sans-serif',
+      }}
+    >
+      <h1 style={{ margin: 0 }}>Server Lisensi Aktif</h1>
+      <p style={{ color: '#8b97a8', margin: 0 }}>
+        Hello From <code>Revoer</code>
+      </p>
+    </main>
+  );
+}
