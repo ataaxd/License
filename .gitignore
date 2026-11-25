@@ -1,4 +1,17 @@
-node_modules
-.next
-.env.local
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+out/
+
+# vercel
 .vercel
+
+# env files (JANGAN pernah di-commit, berisi kunci rahasia)
+.env
+.env*.local
+
+# misc
+.DS_Store
+*.log
