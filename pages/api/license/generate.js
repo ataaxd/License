@@ -1,18 +1,35 @@
-import redis from '../../../lib/kv';
+import kv from '../../../lib/kv';
+import { generateLicenseKey, DAY_MS } from '../../../lib/license';
 import { requireAdmin } from '../../../lib/auth';
-import { makeKey, DAY_MS } from '../../../lib/license';
-export default async function handler(req,res) {
-  if (req.method !== 'POST') return res.status(405).json({error:'method_not_allowed'});
-  if (!requireAdmin(req,res)) return;
-  const { prefix='APP', count=1, days=30, maxDevices=1, note='' } = req.body || {};
-  const n = Math.max(1, Math.min(50, Number(count)||1));
-  const d = Math.max(0, Math.min(3650, Number(days)||0));
-  const m = Math.max(1, Math.min(100, Number(maxDevices)||1));
-  const created=[];
-  for(let i=0;i<n;i++){
-    const key=makeKey(prefix);
-    const record={key,status:'active',createdAt:Date.now(),expiresAt:d?Date.now()+d*DAY_MS:null,maxDevices:m,devices:[],note:String(note).slice(0,300),lastCheckedAt:null};
-    await redis.set(`license:${key}`,record); created.push(record);
-  }
-  return res.status(201).json({licenses:created});
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
+  if (!requireAdmin(req, res)) return;
+
+  const { prefix, expiresInDays, maxActivations, sessionTtlMinutes, note } = req.body || {};
+
+  let key;
+  let tries = 0;
+  do {
+    key = generateLicenseKey(prefix);
+    tries += 1;
+  } while ((await kv.exists(`license:${key}`)) && tries < 5);
+
+  const now = Date.now();
+  const record = {
+    key,
+    status: 'active',
+    createdAt: now,
+    expiresAt: expiresInDays ? now + Number(expiresInDays) * DAY_MS : null,
+    maxActivations: maxActivations ? Number(maxActivations) : 1,
+    // null = pakai DEFAULT_SESSION_TTL_MINUTES global (lihat lib/license.js)
+    sessionTtlMinutes: sessionTtlMinutes ? Number(sessionTtlMinutes) : null,
+    activations: [],
+    note: note || '',
+  };
+
+  await kv.set(`license:${key}`, record);
+  await kv.sadd('license:all', key);
+
+  return res.status(200).json({ license: record });
 }
